@@ -38,8 +38,10 @@ public class EarthquakeActivity extends AppCompatActivity {
     private static final String USGS_REQUEST_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventtype=earthquake&orderby=time&minmag=6&limit=10";
 
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
+
     ListView earthquakeListView;
-    final EarthquakeAdapter  adapter = null ;
+
+    private EarthquakeAdapter  mAdapter ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,43 +49,28 @@ public class EarthquakeActivity extends AppCompatActivity {
         setContentView(R.layout.earthquake_activity);
 
 
-        new DownloadEarthquake().execute(USGS_REQUEST_URL);
-
-        //create Arraylist of earthquakes
-
-       // ArrayList <Earthquake> earthquakes =   QueryUtils.extractEarthquakes();
-
-       /* earthquakes.add(new Earthquake("7.0","San Francisco,CA","Feb 2 , 2012 "));
-        earthquakes.add(new Earthquake("5.0","Mumbai,India","Feb 5 , 2012 "));
-        earthquakes.add(new Earthquake("7.0","San Francisco","Feb 2 , 2012 "));
-        earthquakes.add(new Earthquake("6.0","Claire,univer","Feb 9, 2010 "));
-        earthquakes.add(new Earthquake("7.0","San Francisco","Feb 2 , 2012 "));
-        earthquakes.add(new Earthquake("7.0","San Francisco","Feb 2 , 2012 "));
-        earthquakes.add(new Earthquake("7.0","San Francisco","Feb 2 , 2012 "));
-        earthquakes.add(new Earthquake("7.0","San Francisco","Feb 2 , 2012 "));*/
-
-
-
-
-
         // Find a reference to the {@link ListView} in the layout
-        //ListView earthquakeListView = (ListView) findViewById(R.id.list);
+        ListView earthquakeListView = (ListView) findViewById(R.id.list);
+
+
 
         // Create a new {@link ArrayAdapter} of earthquakes
-        //final EarthquakeAdapter  adapter = new EarthquakeAdapter (this, earthquakes);
+        mAdapter  = new EarthquakeAdapter (this,new ArrayList<Earthquake>());
 
 
         // Set the adapter on the {@link ListView}
         // so the list can be populated in the user interface
-       /// earthquakeListView.setAdapter(adapter);
+        earthquakeListView.setAdapter(mAdapter);
 
-       /*//register a callback when an item has been clicked on
+
+
+       //register a callback when an item has been clicked on
         earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
              @Override
               //modify onitem click
                public void onItemClick(AdapterView<?> adapterView , View view , int position ,long l ){
                          //get the current earthquake
-                     Earthquake currEarthquake = adapter.getItem(position);
+                     Earthquake currEarthquake = mAdapter.getItem(position);
                       //parse its string into uri
                      Uri earthquakeUri = Uri.parse(currEarthquake.getmURL());
                     //create an intent of viewing
@@ -94,7 +81,9 @@ public class EarthquakeActivity extends AppCompatActivity {
 
                   }
 
-              });*/
+              });
+
+        new DownloadEarthquake().execute(USGS_REQUEST_URL);
     }
 
     private class DownloadEarthquake extends AsyncTask<String, Void, ArrayList<Earthquake>> {
@@ -119,20 +108,12 @@ public class EarthquakeActivity extends AppCompatActivity {
 
             //if their is no result do nothing
 
-            if ( earthquakes == null){
-                return;
+            if ( earthquakes == null || earthquakes.isEmpty()){
+                 mAdapter.clear();
             }
-       // Find a reference to the {@link ListView} in the layout
-            earthquakeListView = (ListView) findViewById(R.id.list);
-
-            // Create a new {@link ArrayAdapter} of earthquakes
-            final EarthquakeAdapter  adapter = new EarthquakeAdapter (EarthquakeActivity.this, earthquakes);
-
-
-            // Set the adapter on the {@link ListView}
-            // so the list can be populated in the user interface
-            earthquakeListView.setAdapter(adapter);
-
+            else {
+               mAdapter.addAll(earthquakes);
+            }
         }
     }
 
