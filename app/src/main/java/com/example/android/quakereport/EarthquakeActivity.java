@@ -15,33 +15,33 @@
  */
 package com.example.android.quakereport;
 
-import android.app.Activity;
-import android.app.IntentService;
+import android.app.LoaderManager;
 import android.content.Intent;
+import android.content.Loader;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
 
-public class EarthquakeActivity extends AppCompatActivity {
+//import android.os.AsyncTask;
 
-    /** URL for earthquake data from the USGS dataset */
-    private static final String USGS_REQUEST_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventtype=earthquake&orderby=time&minmag=6&limit=10";
+public class EarthquakeActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<ArrayList<Earthquake>> {
 
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
+    /**
+     * URL for earthquake data from the USGS dataset
+     */
+    private static final String USGS_REQUEST_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventtype=earthquake&orderby=time&minmag=6&limit=10";
+    private static final int EarthquakeLoaderId = 1;
+    private ListView earthquakeListView;
 
-    ListView earthquakeListView;
+    private EarthquakeAdapter mAdapter;
 
-    private EarthquakeAdapter  mAdapter ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,12 +50,11 @@ public class EarthquakeActivity extends AppCompatActivity {
 
 
         // Find a reference to the {@link ListView} in the layout
-        ListView earthquakeListView = (ListView) findViewById(R.id.list);
-
+        earthquakeListView = (ListView) findViewById(R.id.list);
 
 
         // Create a new {@link ArrayAdapter} of earthquakes
-        mAdapter  = new EarthquakeAdapter (this,new ArrayList<Earthquake>());
+        mAdapter = new EarthquakeAdapter(this, new ArrayList<Earthquake>());
 
 
         // Set the adapter on the {@link ListView}
@@ -63,58 +62,59 @@ public class EarthquakeActivity extends AppCompatActivity {
         earthquakeListView.setAdapter(mAdapter);
 
 
+        //register a callback when an item has been clicked on
+        earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            //modify onitem click
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                //get the current earthquake
+                Earthquake currEarthquake = mAdapter.getItem(position);
+                //parse its string into uri
+                Uri earthquakeUri = Uri.parse(currEarthquake.getmURL());
+                //create an intent of viewing
+                Intent webIntent = new Intent(Intent.ACTION_VIEW, earthquakeUri);
+                //start the action
+                startActivity(webIntent);
 
-       //register a callback when an item has been clicked on
-        earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
-             @Override
-              //modify onitem click
-               public void onItemClick(AdapterView<?> adapterView , View view , int position ,long l ){
-                         //get the current earthquake
-                     Earthquake currEarthquake = mAdapter.getItem(position);
-                      //parse its string into uri
-                     Uri earthquakeUri = Uri.parse(currEarthquake.getmURL());
-                    //create an intent of viewing
-                 Intent webIntent = new Intent(Intent.ACTION_VIEW,earthquakeUri);
-                   //start the action
-                 startActivity(webIntent);
 
+            }
 
-                  }
+        });
 
-              });
+        // Get a reference to the LoaderManager, in order to interact with loaders.
+        LoaderManager loaderManager = getLoaderManager();
 
-        new DownloadEarthquake().execute(USGS_REQUEST_URL);
+        // Initialize the loader. Pass in the int ID constant defined above and pass in null for
+        // the bundle. Pass in this activity for the LoaderCallbacks parameter (which is valid
+        // because this activity implements the LoaderCallbacks interface).
+        loaderManager.initLoader(EarthquakeLoaderId, null, this);
     }
 
-    private class DownloadEarthquake extends AsyncTask<String, Void, ArrayList<Earthquake>> {
-        protected ArrayList<Earthquake>  doInBackground(String ... urls) {
+    @Override
+    public Loader<ArrayList<Earthquake>> onCreateLoader(int id, Bundle args) {
+        Log.e(LOG_TAG,"onCreateLoader");
 
-            // check for possible events
-            if (urls.length < 1 || urls [0] == null ){
-                return null ;
-            }
+        return new EarthquakeLoader(EarthquakeActivity.this, USGS_REQUEST_URL);
 
-            //get url and parse it
-            ArrayList<Earthquake> earthquake = QueryUtils.fetchEarthquakeData(urls[0]);
-
-
-            return earthquake;
-
-        }
-
-
-
-        protected void onPostExecute(ArrayList<Earthquake>  earthquakes) {
-
-            //if their is no result do nothing
-
-            if ( earthquakes == null || earthquakes.isEmpty()){
-                 mAdapter.clear();
-            }
-            else {
-               mAdapter.addAll(earthquakes);
-            }
-        }
     }
+
+    @Override
+    public void onLoadFinished(Loader<ArrayList<Earthquake>> loader, ArrayList<Earthquake> data) {
+        Log.e(LOG_TAG,"onLoadFinished()");
+        //clear previous data
+        if (data == null || data.isEmpty()) {
+            mAdapter.clear();
+        } else {
+            mAdapter.addAll(data);
+        }
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<ArrayList<Earthquake>> loader) {
+        Log.e(LOG_TAG,"onLoaderReset()");
+        loader.reset();
+    }
+
 
 }

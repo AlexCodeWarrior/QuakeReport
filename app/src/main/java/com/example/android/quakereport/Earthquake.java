@@ -1,8 +1,5 @@
 package com.example.android.quakereport;
 
-import android.location.Location;
-import android.graphics.drawable.GradientDrawable;
-
 /**
  * Created by at on 7/1/17.
  */

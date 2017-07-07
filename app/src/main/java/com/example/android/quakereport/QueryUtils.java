@@ -24,6 +24,7 @@ import static com.example.android.quakereport.R.id.date;
 
 /**
  * Created by at on 7/1/17.
+ * Handles request to a website of earthquakes and convert it to Earthquakes Arraylist of objects
  */
 
 class QueryUtils {
